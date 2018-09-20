@@ -1,3 +1,4 @@
+export const paper: string;
 export const diagram: string;
 export const span_text: string;
 export const diagram_head: string;

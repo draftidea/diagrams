@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import { Diagram } from "./diagram";
+import { Diagram, DPaper } from "./diagram";
 import { Sheet, FieldType } from './sheet'
 import { DBTable, DBTabelField, DBTableConstraint, DBTableIndex, ERModel } from './ermodel';
 import * as mysql from 'mysql';
@@ -82,11 +82,17 @@ export function loadModel(source: string | DBConnOption, callback: (err?: Error,
 function buildSheetFromTable(table: DBTable): Sheet {
     let sheet = new Sheet(table.name);
     for(const fld of table.fields) {
+        let ky = '';
+        for(const k of table.indexs) {
+            if (k.field.indexOf(fld.name) > -1) {
+                ky = k.type;
+            }
+        }
         let row = {fields: [
             {name: 'name', value: fld.name, type: FieldType.TEXT},
             {name: 'type', value: fld.type, type: FieldType.LIST},
             {name: 'length', value: fld.length, type: FieldType.TEXT},
-            {name: 'key', value: fld.key, type: FieldType.TEXT},
+            {name: 'key', value: ky, type: FieldType.LIST},
             {name: 'allow null', value: fld.allowNull, type: FieldType.TEXT},
             {name: 'default', value: fld.defaultVal, type: FieldType.TEXT},
             {name: 'extra', value: fld.extra, type: FieldType.TEXT},
@@ -97,7 +103,7 @@ function buildSheetFromTable(table: DBTable): Sheet {
 
     let textEditFunc =  function(obj: HTMLElement) {
         let vlu = $(obj).text();
-        let nd = `<input type="text" value="${vlu}"></input>`;
+        let nd = `<input type="text" value="${vlu}" style="width: ${vlu.length * 14}px"></input>`;
         $(obj).empty().html(nd).find('input:first').focus(function(){
             this.focus();
         }).blur(function(){
@@ -106,36 +112,44 @@ function buildSheetFromTable(table: DBTable): Sheet {
         }).focus();
     };
 
+    let listEditFunc = function(obj: HTMLElement, nd: string) {
+        let nm = $(obj).attr('name');
+        let vl = $(obj).text();
+        let tp = $(obj).attr('data-type');
+        let $nd = $(obj).empty().html(nd).find('select:first').focus(function(){
+            this.focus();
+        }).blur(function(){
+            let v = <string>$(this).children('option:selected').val();
+            $(this).parent().empty().text(v);
+        }).focus().find('option').each(function(){
+            let v = <string>$(this).val();
+            if (v == vl) {
+                $(this).attr('selected', 'selected');
+            }
+        });
+    };
+
     sheet.addColumnEditors({
         0: function(event) {
             textEditFunc(event.target);
         },
         1: function(event) {
-            let nm = $(event.target).attr('name');
-            let vl = $(event.target).text();
-            let tp = $(event.target).attr('data-type');
             let nd = `<select> <option value="int">int</option>
                                 <option value="bigint">bigint</option>
                                 <option value="varchar">varchar</option>
                                 <option value="datetime">datetime</option>
                                 <option value="bit">bit</option> </select>`;
-            let $nd = $(event.target).empty().html(nd).find('select:first').focus(function(){
-                this.focus();
-            }).blur(function(){
-                let v = <string>$(this).children('option:selected').val();
-                $(this).parent().empty().text(v);
-            }).focus().find('option').each(function(){
-                let v = <string>$(this).val();
-                if (v == vl) {
-                    $(this).attr('selected', 'selected');
-                }
-            });
+
+            listEditFunc(event.target, nd);
         },
         2: function(event) {
             textEditFunc(event.target);
         },
         3: function(event) {
-            textEditFunc(event.target);
+            let nd = `<select> <option value="PRIMARY KEY">PRIMARY KEY</option>
+                                <option value="UNIQUE KEY">UNIQUE KEY</option>
+                                <option value="KEY">KEY</option> </select>`;
+            listEditFunc(event.target, nd);
         },
         4: function(event) {
             textEditFunc(event.target);
@@ -154,16 +168,16 @@ function buildSheetFromTable(table: DBTable): Sheet {
 }
 
 export function showModel(model: ERModel) {
+    let paper = new DPaper($('#paper')[0], 'paper');
     let i = 0;
-    let diagrams = [];
     for (const key in model.dbTables) {
         let table = model.dbTables[key];
         let diagram = new Diagram($('#paper')[0], key, i % 5 * 200, i / 5 *200);
         diagram.addContent(buildSheetFromTable(table));
-        diagrams.push(diagram);
+        paper.addDiagram(diagram);
         i = i + 1;
     }
-    console.log(diagrams);
+    // console.log(diagrams);
 }
 
 // sheet.addRow({fields: [
