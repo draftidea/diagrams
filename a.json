@@ -2364,7 +2364,8 @@
                 }
             ],
             "constraints":[
-
+                {"name": "fk_sys_user", "field": "user_id", "refTable": "sys_user", "refFields": "id"},
+                {"name": "fk_sys_role", "field": "role_id", "refTable": "sys_role", "refFields": "id"}
             ]
         },
         "sys_user_shop":{

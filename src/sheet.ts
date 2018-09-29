@@ -95,12 +95,6 @@ export class Sheet {
         this.dom = $(htm)[0];
     }
 
-    refresh(container: HTMLElement) {
-        this.container = container;
-        $(container).empty();
-        $(container).append($(this.dom));
-    }
-
     addRow(row: RowData) {
         let rw = new Row(this, row);
         this.rows.push(rw);

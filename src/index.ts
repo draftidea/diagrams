@@ -10,7 +10,7 @@ let dbcnf = {
     timeout: 30000 
 };
 
-loadModel(dbcnf, (err, model) => {
+loadModel('a.json', (err, model) => {
     if (err) {
         console.log(err);
     } else {

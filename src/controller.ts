@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import { Diagram, DPaper } from "./diagram";
+import { Diagram, DPaper, Relation, RelationType } from "./diagram";
 import { Sheet, FieldType } from './sheet'
 import { DBTable, DBTabelField, DBTableConstraint, DBTableIndex, ERModel } from './ermodel';
 import * as mysql from 'mysql';
@@ -172,11 +172,28 @@ export function showModel(model: ERModel) {
     let i = 0;
     for (const key in model.dbTables) {
         let table = model.dbTables[key];
-        let diagram = new Diagram($('#paper')[0], key, i % 5 * 200, i / 5 *200);
+        let diagram = new Diagram(paper, $('#paper')[0], key, i % 5 * 200, Math.floor(i / 5) *200);
         diagram.addContent(buildSheetFromTable(table));
         paper.addDiagram(diagram);
         i = i + 1;
     }
+
+    for (const key in model.dbTables) {
+        let masterDiagram = paper.findDiagram(key);
+        if (masterDiagram) {
+            if (model.dbTables[key].constraints) {
+                for(const cstr of model.dbTables[key].constraints) {
+                    let diagram = paper.findDiagram(cstr.refTable);
+                    if (diagram) {
+                        let fld = cstr.refField;
+                        let relation = new Relation(paper, cstr.name, RelationType.FOREIGN_KEY, masterDiagram,  diagram, cstr.field, fld);
+                        paper.addRelation(relation);
+                    }
+                }
+            }
+        }
+    }
+
     // console.log(diagrams);
 }
 

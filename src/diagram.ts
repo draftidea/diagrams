@@ -1,30 +1,92 @@
 import * as css from './index.css';
 import $ from 'jquery';
 import Raphael from 'raphael';
+import { realpath } from 'fs';
 
 interface IContent {
-    refresh(container: HTMLElement): void;
+    dom: HTMLElement;
+}
+
+export enum RelationType {
+    FOREIGN_KEY, ASSOCIATION
+}
+
+export class Relation {
+    paper: DPaper;
+    name: string;
+    type: RelationType;
+    srcField: string;
+    srcDiagram: Diagram;
+    dstDiagram: Diagram;
+    dstField: string;
+    path: RaphaelPath | undefined;
+
+    constructor(paper: DPaper, name: string, type: RelationType, srcDiagram: Diagram, dstDiagram: Diagram, srcField: string, dstField: string) {
+        this.paper = paper;
+        this.name = name;
+        this.srcField = srcField;
+        this.type = type;
+        this.srcDiagram = srcDiagram;
+        this.dstDiagram = dstDiagram;
+        this.dstField = dstField;
+    }
+
+    redraw() {
+        if (this.path) {
+            this.path.remove();
+        }
+        this.draw();
+    }
+
+    draw() {
+        let x0 =  this.srcDiagram.box!.attr('x');
+        let y0 = this.srcDiagram.box!.attr('y');
+        let w0 = this.srcDiagram.box!.attr('width');
+        let h0 = this.srcDiagram.box!.attr('height');
+        let pointTop0 = {x: x0 + w0 / 2, y: y0};
+        let pointBottom0 = {x: x0 + w0 / 2, y: y0 + h0};
+        let pointLeft0 = {x: x0, y: y0 + h0 / 2};
+        let pointRight0 = {x: x0 + w0,  y: y0 + h0 / 2};
+
+        let x1 = this.dstDiagram.box!.attr('x');
+        let y1 = this.dstDiagram.box!.attr('y');
+        let w1 = this.dstDiagram.box!.attr('width');
+        let h1 = this.dstDiagram.box!.attr('height');
+        let pointTop1 = {x: x1 + w1 / 2 , y: y1};
+        let pointBottom1 = {x: x1 + w1 / 2 , y: y1 + h1};
+        let pointLeft1 = {x: x1, y: y1 + h1 / 2};
+        let pointRight1 = {x: x1 + w1, y: y1 + h1 / 2};
+
+        let lineStr = `M${pointTop0.x} ${pointTop0.y} L${pointTop1.x} ${pointTop1.y} z`;
+        this.path = this.paper.raphael.path(lineStr); 
+    }
+
+    get(name: string) {
+        return this;
+    }
+    
 }
 
 export class Diagram {
+    paper: DPaper;
     container: HTMLElement;
     name: string;
     dom: HTMLElement;
     x: number = 0; y: number = 0; 
-    lendPoint: Array<Diagram> = [];
-    rendPoint: Array<Diagram> = [];
+    
     content: any;
     listeners: {[name: string]: (event: any) => any} = {};
     box: RaphaelElement | undefined = undefined;
 
-    constructor(container: HTMLElement, name: string, x:number, y:number) {
+    constructor(paper: DPaper, container: HTMLElement, name: string, x:number, y:number) {
+        this.paper = paper;
         this.container = container;
         this.name = name;
         this.x = x;
         this.y = y;
 
         let htm = `<div id="${this.name}" class="${css.diagram} ${css.shadow}" style="left: ${this.x}px; top: ${this.y}px;">
-            <div class="${css.diagram_head}"><i class="fa fa-table"></i><span class="${css.span_text}">${this.name}</span></div>
+            <div class="${css.diagram_head}"><div class="${css.head_title}"><i class="fa fa-table"></i><span class="${css.span_text}">${this.name}</span></div><div class="${css.head_icons}"><a><i class="fa fa-window-minimize"></i></a></div></div>
             <div class="${css.diagram_body}"></div>
         </div>`;
         this.dom = $(htm)[0];
@@ -73,6 +135,13 @@ export class Diagram {
             } 
         }
 
+        let redrawRelation = function() {
+            let relations = that.paper.findRelation(that.name) ;
+            for(let relation of relations) {
+                relation.redraw();
+            }
+        }
+
         let onMove = function(event: any) {
             if (that.box) {
                 that.box.attr("x", that.x + 2);
@@ -80,10 +149,10 @@ export class Diagram {
                 that.box.attr("width", that.dom.clientWidth - 4);
                 that.box.attr("height", that.dom.clientHeight - 4);
             }
+            redrawRelation();
             if (that.listeners['onMove']) {
-                return that.listeners['onMove'](event);
+                return that.listeners['onMove'](that);
             }
-            
             return false;
         }
 
@@ -92,13 +161,29 @@ export class Diagram {
                 that.box.attr("width", that.dom.clientWidth - 4);
                 that.box.attr("height", that.dom.clientHeight - 4);
             }
+            redrawRelation();
             if (that.listeners['onResize']) {
-                return that.listeners['onResize'](event);
+                return that.listeners['onResize'](that);
             }
-            
             return false;
         }
 
+        $(this.dom).find('a').last().click((event) => {
+            // console.log('click...');
+            let ii = $(event.target);
+            // console.log(ii);
+            if (ii.hasClass('fa-window-minimize')) {
+                ii.removeClass('fa-window-minimize');
+                ii.addClass('fa-window-maximize');
+                ii.parent().parent().parent().siblings(`div.${css.diagram_body}`).last().show();
+                onResize(event);
+            } else {
+                ii.removeClass('fa-window-maximize');
+                ii.addClass('fa-window-minimize'); 
+                ii.parent().parent().parent().siblings(`div.${css.diagram_body}`).last().hide();
+                onResize(event);
+            }
+        })
         $(this.dom).bind('mousedown', onDragstart);
     }
 
@@ -115,12 +200,15 @@ export class Diagram {
 
     addContent(content: IContent) {
         this.content = content;
-        this.content.refresh($(this.dom).children().last()[0]) ;
+        let slc = `div.${css.diagram_body}`;
+        let bd = $(this.dom).children(slc).last();
+        bd.empty().append(this.content.dom).hide();
     }
 
     setBox(box: RaphaelElement) {
         this.box = box;
     }
+
 }
 
 
@@ -129,6 +217,7 @@ export class DPaper {
     raphael: RaphaelPaper;
     container: HTMLElement;
     diagrams: Diagram[] = [];
+    relations: Relation[] = [];
 
     constructor(container: HTMLElement, name: string) {
         this.container = container;
@@ -145,18 +234,12 @@ export class DPaper {
                     d.box.attr('height', d.dom.clientHeight-4);
                 }
             }
-            // console.log(`resize: document.body.clientHeight = ${document.body.clientHeight}, document.documentElement.clientHeight = ${document.documentElement.clientHeight}`);
-            // console.log(`resize: document.body.scrollHeight = ${document.body.scrollHeight}, document.documentElement.scrollHeight = ${document.documentElement.scrollHeight}`);
-            // console.log(`resize: document.body.offsetHeight = ${document.body.offsetHeight}, document.docuemntElement.offsetHeight = ${document.documentElement.offsetHeight}`);
         });
 
         $(window).scroll(() => {
             let x = document.documentElement.clientWidth;
             let y = Math.max(document.body.clientHeight, document.body.scrollHeight, document.body.offsetHeight, document.documentElement.clientHeight, document.documentElement.scrollHeight, document.documentElement.offsetHeight);
             this.raphael.setSize(x, y);
-            // console.log(`scroll: document.body.clientHeight = ${document.body.clientHeight}, document.documentElement.clientHeight = ${document.documentElement.clientHeight}`);
-            // console.log(`scroll: document.body.scrollHeight = ${document.body.scrollHeight}, document.documentElement.scrollHeight = ${document.documentElement.scrollHeight}`);
-            // console.log(`scroll: document.body.offsetHeight = ${document.body.offsetHeight}, document.docuemntElement.offsetHeight = ${document.documentElement.offsetHeight}`);
         });
     }
 
@@ -180,5 +263,21 @@ export class DPaper {
             }
         }
     }
+
+    addRelation(relation: Relation) {
+        this.relations.push(relation);
+        relation.draw();
+    }
+    
+    findRelation(name: string): Relation[]{
+        let result = [];
+        for(let relation of this.relations) {
+            if (relation.srcDiagram.name == name || relation.dstDiagram.name == name){
+                result.push(relation);
+            }
+        }
+        return result;
+    }
+
 
 }
