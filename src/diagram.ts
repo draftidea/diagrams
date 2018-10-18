@@ -211,6 +211,47 @@ export class Diagram {
 
 }
 
+export class WPage {
+    bar: CtrlBar;
+    paper: DPaper;
+
+    constructor(barId: string, paperId: string) {
+        this.bar = new CtrlBar($(`#${barId}`)[0], 'bar');
+        this.paper = new DPaper($(`#${paperId}`)[0], 'paper');
+    }
+}
+
+export class CtrlBar {
+    name: string;
+    container: HTMLElement;
+
+    constructor(container: HTMLElement, name: string) {
+        this.container = container;
+        this.name = name;
+
+        let ul = $('<ul></ul>');
+
+        let btn1 = $('<a title="open model file"><i class="fa fa-folder-open"></i></a>').click((event)=>{
+            console.log('open model file');
+        });
+        let li1 = $('<li></li>').append(btn1);
+        ul.append(li1);
+
+        let btn2 = $('<a title="save model file"><i class="fa fa-floppy-o"></i></a>').click((event) => {
+            console.log("save model file");
+        });
+        let li2 = $('<li></li>').append(btn2);
+        ul.append(li2);
+
+        ul.append($('<li class="spliter">|</li>'));
+
+
+        $(this.container).append(ul);
+        $(this.container).addClass(css.bar);
+
+    }
+}
+
 
 export class DPaper {
     name: string;
@@ -223,6 +264,8 @@ export class DPaper {
         this.container = container;
         this.name = name;
         this.raphael = Raphael(container, container.clientWidth, container.clientHeight);
+
+        $(this.container).addClass(css.paper);
 
         $(window).resize(() => {
             let x = document.documentElement.clientWidth;

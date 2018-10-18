@@ -6,7 +6,7 @@ div.paper {width: 100%; height:100%; position:relative;}
 
 .diagram {
     position: absolute;   
-    border: 1px solid #ececec;
+    border: 1px solid #dddddd;
     border-radius: 4px;
     padding: 0;
     margin: 0;
@@ -93,3 +93,12 @@ div.paper {width: 100%; height:100%; position:relative;}
 .sheet tr td:last-child {
     border-right: 0;
 }
+
+.bar {width: 100%; height: 32px; position: fixed; top: 0; background-color: lightgray; z-index: 20; opacity: 0.85; font-size: 12pt;}
+.bar ul {list-style: none; line-height: 32px; margin-left: 80px; margin-top: 0;}
+.bar ul li {display: inline; padding-left: 3px; padding-right: 3px;}
+.bar ul li a {cursor:  pointer; padding: 3px;}
+.bar ul li a:hover {color: blue;}
+.bar ul li.spliter {font-size: 14pt; color: #a9a9a9;}
+
+

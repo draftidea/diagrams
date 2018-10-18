@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import { Diagram, DPaper, Relation, RelationType } from "./diagram";
+import { Diagram, DPaper, Relation, RelationType, CtrlBar, WPage } from "./diagram";
 import { Sheet, FieldType } from './sheet'
 import { DBTable, DBTabelField, DBTableConstraint, DBTableIndex, ERModel } from './ermodel';
 import * as mysql from 'mysql';
@@ -167,12 +167,15 @@ function buildSheetFromTable(table: DBTable): Sheet {
     return sheet;
 }
 
-export function showModel(model: ERModel) {
-    let paper = new DPaper($('#paper')[0], 'paper');
+export function showPage() : WPage {
+    return new WPage('bar', 'paper');
+}
+
+export function showModel(paper:DPaper, model: ERModel) {
     let i = 0;
     for (const key in model.dbTables) {
         let table = model.dbTables[key];
-        let diagram = new Diagram(paper, $('#paper')[0], key, i % 5 * 200, Math.floor(i / 5) *200);
+        let diagram = new Diagram(paper, paper.container, key, i % 5 * 200, Math.floor(i / 5) * 200 + 60);
         diagram.addContent(buildSheetFromTable(table));
         paper.addDiagram(diagram);
         i = i + 1;

@@ -1,4 +1,4 @@
-import {loadModel, showModel} from './controller';
+import {loadModel, showModel, showPage} from './controller';
 
 let dbcnf = {
     host: "192.168.16.173",
@@ -10,12 +10,14 @@ let dbcnf = {
     timeout: 30000 
 };
 
+let page = showPage();
+
 loadModel('a.json', (err, model) => {
     if (err) {
         console.log(err);
     } else {
         if (model) {
-            showModel(model);
+            showModel(page.paper, model);
         }
     }
 });

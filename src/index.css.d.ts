@@ -9,3 +9,5 @@ export const hide: string;
 export const show: string;
 export const shadow: string;
 export const sheet: string;
+export const bar: string;
+export const spliter: string;
