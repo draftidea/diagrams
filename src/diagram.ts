@@ -20,6 +20,7 @@ export class Relation {
     dstDiagram: Diagram;
     dstField: string;
     path: RaphaelPath | undefined;
+    circles: RaphaelElement[] = [];
 
     constructor(paper: DPaper, name: string, type: RelationType, srcDiagram: Diagram, dstDiagram: Diagram, srcField: string, dstField: string) {
         this.paper = paper;
@@ -31,10 +32,28 @@ export class Relation {
         this.dstField = dstField;
     }
 
+    destructor() {
+        if (this.path) {
+            this.path.remove();
+        }
+        for(let circle of this.circles) {
+            if (circle) {
+                circle.remove();
+            }
+        }
+        this.circles = [];
+    }
+
     redraw() {
         if (this.path) {
             this.path.remove();
         }
+        for(let circle of this.circles) {
+            if (circle) {
+                circle.remove();
+            }
+        }
+        this.circles = [];
         this.draw();
     }
 
@@ -47,6 +66,7 @@ export class Relation {
         let pointBottom0 = {x: x0 + w0 / 2, y: y0 + h0};
         let pointLeft0 = {x: x0, y: y0 + h0 / 2};
         let pointRight0 = {x: x0 + w0,  y: y0 + h0 / 2};
+        
 
         let x1 = this.dstDiagram.box!.attr('x');
         let y1 = this.dstDiagram.box!.attr('y');
@@ -56,9 +76,94 @@ export class Relation {
         let pointBottom1 = {x: x1 + w1 / 2 , y: y1 + h1};
         let pointLeft1 = {x: x1, y: y1 + h1 / 2};
         let pointRight1 = {x: x1 + w1, y: y1 + h1 / 2};
+        
+        
+        let src_top = pointTop0;
+        let src_rgt = pointRight0;
+        let src_btm = pointBottom0;
+        let dst_top = pointTop1;
+        let dst_lft = pointLeft1;
+        let dst_btm = pointBottom1;
+        if (x0 > x1) {
+            src_top = pointTop1;
+            src_rgt = pointRight1;
+            src_btm = pointBottom1;
+            dst_top = pointTop0;
+            dst_lft = pointLeft0;
+            dst_btm = pointBottom0;
+        }
+        let src_ctr = {x: src_top.x, y: src_rgt.y};
+        let dst_ctr = {x: dst_top.x, y: dst_lft.y};
+        let tg = -(dst_ctr.y - src_ctr.y) / (dst_ctr.x - src_ctr.x);
 
-        let lineStr = `M${pointTop0.x} ${pointTop0.y} L${pointTop1.x} ${pointTop1.y} z`;
+        let src_p = src_rgt
+        let dst_p = dst_lft;
+        
+        let mdl_p1 = {x: src_p.x + 10, y: src_p.y};
+        let mdl_p2 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: src_p.y};
+        let mdl_p3 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: dst_p.y};
+        let mdl_p4 = {x: dst_p.x - 10 , y: dst_p.y}; 
+
+        if (tg <= 1 && tg >= -1) {
+            console.log(1)
+            src_p = src_rgt
+            dst_p = dst_lft;
+            if ((dst_ctr.x - src_ctr.x - 8) <  ((w0 + w1) / 2)) {
+                if (tg >= 0) {
+                    console.log(11);
+                    src_p = src_top;
+                    dst_p = dst_top;
+                    mdl_p1 = {x: src_p.x, y: src_p.y - 10};
+                    mdl_p2 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: src_p.y -10};
+                    mdl_p3 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: dst_p.y - 10};
+                    mdl_p4 = {x: dst_p.x , y: dst_p.y - 10};
+                } else {
+                    console.log(12);
+                    src_p = src_btm;
+                    dst_p = dst_btm;
+                    console.log(src_p);
+
+                    mdl_p1 = {x: src_p.x, y: src_p.y + 10};
+                    mdl_p2 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: src_p.y + 10};
+                    mdl_p3 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: dst_p.y + 10};
+                    mdl_p4 = {x: dst_p.x , y: dst_p.y + 10};
+                }
+            }
+        } else {
+            console.log(2);
+            if (tg > 0) {
+                console.log(21);
+                src_p = src_top;
+                dst_p = dst_lft;
+                if ((dst_ctr.x - src_ctr.x - 8) <  ((w0 + w1) / 2)) {
+                    console.log(211);
+                    dst_p = dst_top;
+                    mdl_p1 = {x: src_p.x, y: src_p.y - 10};
+                    mdl_p2 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: src_p.y - 10};
+                    mdl_p3 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: dst_p.y - 10};
+                    mdl_p4 = {x: dst_p.x, y: dst_p.y - 10 };
+                }
+            } else {
+                console.log(22);
+                src_p = src_btm;
+                dst_p = dst_lft;
+                if ((dst_ctr.x - src_ctr.x) <  ((w0 + w1) / 2)) {
+                    console.log(221);
+                    dst_p = dst_btm;
+                    mdl_p1 = {x: src_p.x, y: src_p.y + 10};
+                    mdl_p2 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: src_p.y + 10};
+                    mdl_p3 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: dst_p.y + 10} ;
+                    mdl_p4 = {x: dst_p.x , y: dst_p.y + 10};
+                }
+            }
+        }
+
+        console.log(src_p);
+        let lineStr = `M${src_p.x} ${src_p.y} L${mdl_p1.x} ${mdl_p1.y}L${mdl_p2.x} ${mdl_p2.y} L${mdl_p3.x} ${mdl_p3.y} L${mdl_p4.x} ${mdl_p4.y} L${dst_p.x} ${dst_p.y} `;
+        console.log(lineStr);
         this.path = this.paper.raphael.path(lineStr); 
+        this.circles.push(this.paper.raphael.circle(src_p.x, src_p.y, 6).attr({fill: "#000"}));
+        this.circles.push(this.paper.raphael.circle(dst_p.x, dst_p.y, 6).attr({fill: "#000"}));
     }
 
     get(name: string) {
@@ -187,6 +292,23 @@ export class Diagram {
         $(this.dom).bind('mousedown', onDragstart);
     }
 
+    redraw(x: number, y:number) {
+        this.x = x;
+        this.y = y;
+        this.dom.style.left = `${this.x}px`;
+        this.dom.style.top = `${this.y}px`;
+        if (this.box) {
+            this.box.attr("x", this.x + 2);
+            this.box.attr("y", this.y + 2);
+            this.box.attr("width", this.dom.clientWidth - 4);
+            this.box.attr("height", this.dom.clientHeight - 4);
+        }
+        let relations = this.paper.findRelation(this.name) ;
+        for(let relation of relations) {
+            relation.redraw();
+        }
+    }
+
     destructor() {
         if (this.box) {
             this.box.remove();
@@ -271,11 +393,11 @@ export class DPaper {
             let x = document.documentElement.clientWidth;
             let y = Math.max(document.body.clientHeight, document.body.scrollHeight, document.body.offsetHeight, document.documentElement.clientHeight, document.documentElement.scrollHeight, document.documentElement.offsetHeight);
             this.raphael.setSize(x, y);
+            let col = Math.floor(this.raphael.width / 200);
+            let i = 0;
             for(let d of this.diagrams) {
-                if (d.box) {
-                    d.box.attr('width', d.dom.clientWidth-4);
-                    d.box.attr('height', d.dom.clientHeight-4);
-                }
+                d.redraw(i % col * 200, Math.floor(i / col) * 200 + 60);
+                i += 1;
             }
         });
 
@@ -321,6 +443,5 @@ export class DPaper {
         }
         return result;
     }
-
 
 }
