@@ -12,7 +12,7 @@ let dbcnf = {
 
 let page = showPage();
 
-loadModel('a.json', (err, model) => {
+loadModel(dbcnf, (err, model) => {
     if (err) {
         console.log(err);
     } else {

@@ -84,7 +84,7 @@ export class Relation {
         let dst_top = pointTop1;
         let dst_lft = pointLeft1;
         let dst_btm = pointBottom1;
-        if (x0 > x1) {
+        if ((x0 + w0 / 2) > (x1 +  w1 / 2)) {
             src_top = pointTop1;
             src_rgt = pointRight1;
             src_btm = pointBottom1;
@@ -99,68 +99,72 @@ export class Relation {
         let src_p = src_rgt
         let dst_p = dst_lft;
         
-        let mdl_p1 = {x: src_p.x + 10, y: src_p.y};
-        let mdl_p2 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: src_p.y};
-        let mdl_p3 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: dst_p.y};
-        let mdl_p4 = {x: dst_p.x - 10 , y: dst_p.y}; 
+        let p1 = {x: src_p.x + 10, y: src_p.y};
+        let p2 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: src_p.y};
+        let p3 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: dst_p.y};
+        let p4 = {x: dst_p.x - 10 , y: dst_p.y}; 
 
-        if (tg <= 1 && tg >= -1) {
-            console.log(1)
-            src_p = src_rgt
-            dst_p = dst_lft;
-            if ((dst_ctr.x - src_ctr.x - 8) <  ((w0 + w1) / 2)) {
-                if (tg >= 0) {
-                    console.log(11);
-                    src_p = src_top;
-                    dst_p = dst_top;
-                    mdl_p1 = {x: src_p.x, y: src_p.y - 10};
-                    mdl_p2 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: src_p.y -10};
-                    mdl_p3 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: dst_p.y - 10};
-                    mdl_p4 = {x: dst_p.x , y: dst_p.y - 10};
-                } else {
-                    console.log(12);
-                    src_p = src_btm;
+        if ((dst_ctr.x - src_ctr.x) > (w0 + w1 + 20) / 2) {
+            src_p = src_rgt;
+            if (Math.abs(dst_ctr.y - src_ctr.y) > (h0 + h1 + 20) / 2) {
+                if (tg > 0) {
                     dst_p = dst_btm;
-                    console.log(src_p);
-
-                    mdl_p1 = {x: src_p.x, y: src_p.y + 10};
-                    mdl_p2 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: src_p.y + 10};
-                    mdl_p3 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: dst_p.y + 10};
-                    mdl_p4 = {x: dst_p.x , y: dst_p.y + 10};
-                }
-            }
-        } else {
-            console.log(2);
-            if (tg > 0) {
-                console.log(21);
-                src_p = src_top;
-                dst_p = dst_lft;
-                if ((dst_ctr.x - src_ctr.x - 8) <  ((w0 + w1) / 2)) {
-                    console.log(211);
+                    p1 = {x: src_p.x + 10, y: src_p.y};
+                    p2 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: src_p.y};
+                    p3 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: dst_p.y + 10};
+                    p4 = {x: dst_p.x , y: dst_p.y + 10}; 
+                } else {
                     dst_p = dst_top;
-                    mdl_p1 = {x: src_p.x, y: src_p.y - 10};
-                    mdl_p2 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: src_p.y - 10};
-                    mdl_p3 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: dst_p.y - 10};
-                    mdl_p4 = {x: dst_p.x, y: dst_p.y - 10 };
+                    p1 = {x: src_p.x + 10, y: src_p.y};
+                    p2 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: src_p.y};
+                    p3 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: dst_p.y - 10};
+                    p4 = {x: dst_p.x , y: dst_p.y - 10}; 
                 }
             } else {
-                console.log(22);
-                src_p = src_btm;
                 dst_p = dst_lft;
-                if ((dst_ctr.x - src_ctr.x) <  ((w0 + w1) / 2)) {
-                    console.log(221);
+                p1 = {x: src_p.x + 10, y: src_p.y};
+                p2 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: src_p.y};
+                p3 = {x: src_p.x  + (dst_p.x - src_p.x) / 2, y: dst_p.y};
+                p4 = {x: dst_p.x - 10, y: dst_p.y}; 
+            }
+        } else {
+            if (Math.abs(dst_ctr.y - src_ctr.y) > (h0 + h1 + 20) / 2) {
+                if (tg > 0) {
+                    src_p = src_top;
                     dst_p = dst_btm;
-                    mdl_p1 = {x: src_p.x, y: src_p.y + 10};
-                    mdl_p2 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: src_p.y + 10};
-                    mdl_p3 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: dst_p.y + 10} ;
-                    mdl_p4 = {x: dst_p.x , y: dst_p.y + 10};
+                    p1 = {x: src_p.x, y: src_p.y - 10};
+                    p2 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: src_p.y - 10};
+                    p3 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: dst_p.y + 10};
+                    p4 = {x: dst_p.x, y: dst_p.y + 10}; 
+                } else {
+                    src_p = src_btm;
+                    dst_p = dst_top;
+                    p1 = {x: src_p.x, y: src_p.y + 10};
+                    p2 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: src_p.y + 10 };
+                    p3 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: dst_p.y - 10};
+                    p4 = {x: dst_p.x, y: dst_p.y - 10}; 
+                }
+            } else {
+                if(tg > 0) {
+                    src_p = src_top;
+                    dst_p = dst_lft;
+                    p1 = {x: src_p.x, y: src_p.y - 10};
+                    p2 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: src_p.y - 10};
+                    p3 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: dst_p.y};
+                    p4 = {x: dst_p.x - 10, y: dst_p.y}; 
+                } else {
+                    src_p = src_btm;
+                    dst_p = dst_lft;
+                    p1 = {x: src_p.x, y: src_p.y + 10};
+                    p2 = {x: src_p.x + (dst_p.x - src_p.x) / 2, y: src_p.y + 10 };
+                    p3 = {x: src_p.x  + (dst_p.x - src_p.x) / 2, y: dst_p.y - 10};
+                    p4 = {x: dst_p.x, y: dst_p.y - 10}; 
                 }
             }
         }
 
-        console.log(src_p);
-        let lineStr = `M${src_p.x} ${src_p.y} L${mdl_p1.x} ${mdl_p1.y}L${mdl_p2.x} ${mdl_p2.y} L${mdl_p3.x} ${mdl_p3.y} L${mdl_p4.x} ${mdl_p4.y} L${dst_p.x} ${dst_p.y} `;
-        console.log(lineStr);
+
+        let lineStr = `M${src_p.x} ${src_p.y} L${p1.x} ${p1.y}L${p2.x} ${p2.y} L${p3.x} ${p3.y} L${p4.x} ${p4.y} L${dst_p.x} ${dst_p.y} `;
         this.path = this.paper.raphael.path(lineStr); 
         this.circles.push(this.paper.raphael.circle(src_p.x, src_p.y, 6).attr({fill: "#000"}));
         this.circles.push(this.paper.raphael.circle(dst_p.x, dst_p.y, 6).attr({fill: "#000"}));
